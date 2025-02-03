@@ -7,5 +7,9 @@ def Homepage(request):
      template = loader.get_template('index.html')
      return HttpResponse(template.render())
 
+def Abhishek(request):
+     template = loader.get_template('index.html')
+     return HttpResponse(template.render())
+
 def Hello(request):
     return HttpResponse("Hello world!")
