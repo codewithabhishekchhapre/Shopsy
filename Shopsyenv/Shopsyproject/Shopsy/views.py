@@ -5,6 +5,7 @@ import json
 import re
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from .models import User
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
 # from rest_framework import status
@@ -65,7 +66,18 @@ def signup_view(request):
 
         if errors:
             return JsonResponse({"message": "Register failed", "is_register": False, "errors": errors}, status=400)
+        
+          # Check if user already exists
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({"message": "Email already exists", "is_register": False}, status=400)
 
+        if User.objects.filter(mobile=mobile).exists():
+            return JsonResponse({"message": "Mobile number already registered", "is_register": False}, status=400)
+
+        # Save user to database with hashed password
+        user = User(name=name, email=email, mobile=mobile, password=password)
+        user.save()
+        
         return JsonResponse({"message": "Register successfully", "is_register": True}, status=200)
 
     return JsonResponse({"message": "Invalid request method"}, status=405)
