@@ -9,3 +9,15 @@ class User(models.Model):
 
     def __str__(self):
         return self.name
+
+class Product(models.Model):
+    productname = models.CharField(max_length=100)
+    productprice = models.IntegerField(default=0)
+    description = models.CharField(max_length=100)
+    discount = models.IntegerField(default=0)
+    create_date = models.DateField(auto_now=True)
+    create_by = models.CharField(max_length=100)
+
+
+    def _str_(self):
+        return self.productname
