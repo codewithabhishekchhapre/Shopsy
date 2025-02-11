@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import User
 from .models import Product
+from .models import Order
 from django.contrib.auth.hashers import check_password
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
@@ -209,3 +210,118 @@ def update_product_view(request, product_id):
         return JsonResponse({"is_updated": True, "message": "Product updated successfully"}, status=200)
 
     return JsonResponse({"message": "Method Not Allowed"}, status=405)
+
+
+
+@csrf_exempt
+def create_order(request):
+    """Creates an order"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"message": "Invalid JSON"}, status=400)
+
+        user_id = data.get("user_id")
+        product_id = data.get("product_id")
+        quantity = data.get("quantity", 1)
+        full_name = data.get("full_name")
+        phone = data.get("phone")
+        house_no = data.get("house_no")
+        landmark = data.get("landmark", "")
+        city = data.get("city")
+        state = data.get("state")
+        pincode = data.get("pincode")
+        delivery_charge = data.get("delivery_charge", 50.00)
+
+        errors = {}
+
+        if not user_id or not User.objects.filter(id=user_id).exists():
+            errors["user_id"] = "Invalid or missing user"
+
+        if not product_id or not Product.objects.filter(id=product_id).exists():
+            errors["product_id"] = "Invalid or missing product"
+
+        if not full_name or len(full_name) < 3:
+            errors["full_name"] = "Full name must be at least 3 characters long"
+
+        if not phone or not phone.isdigit() or len(phone) < 10:
+            errors["phone"] = "Invalid phone number"
+
+        if not house_no:
+            errors["house_no"] = "House number is required"
+
+        if not city:
+            errors["city"] = "City is required"
+
+        if not state:
+            errors["state"] = "State is required"
+
+        if not pincode or len(pincode) < 6:
+            errors["pincode"] = "Invalid pincode"
+
+        if errors:
+            return JsonResponse({"message": "Order creation failed", "errors": errors}, status=400)
+
+        user = User.objects.get(id=user_id)
+        product = Product.objects.get(id=product_id)
+
+        order = Order(
+            user=user,
+            product=product,
+            quantity=quantity,
+            price=product.productprice,
+            delivery_charge=delivery_charge,
+            full_name=full_name,
+            phone=phone,
+            house_no=house_no,
+            landmark=landmark,
+            city=city,
+            state=state,
+            pincode=pincode
+        )
+        order.save()
+
+        return JsonResponse({
+            "message": "Order created successfully",
+            "order_id": order.id,
+            "total_price": order.total_price,
+            "username": user.name,  # Send username
+            "product_name": product.productname,  # Send product name
+            "product_price": product.productprice,  # Send product price
+            "order_date": order.order_date.strftime("%Y-%m-%d %H:%M:%S") 
+        }, status=201)
+
+    return JsonResponse({"message": "Method Not Allowed"}, status=405)
+
+
+# @csrf_exempt
+# def get_order_details(request, order_id):
+#     """Retrieve details of a specific order"""
+#     if request.method == "GET":
+#         try:
+#             order = Order.objects.get(id=order_id)
+#             response_data = {
+#                 "order_id": order.id,
+#                 "user": order.user.username,
+#                 "product": order.product.productname,
+#                 "quantity": order.quantity,
+#                 "price": str(order.price),
+#                 "delivery_charge": str(order.delivery_charge),
+#                 "total_price": str(order.total_price),
+#                 "status": order.status,
+#                 "order_date": order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
+#                 "full_name": order.full_name,
+#                 "phone": order.phone,
+#                 "house_no": order.house_no,
+#                 "landmark": order.landmark,
+#                 "city": order.city,
+#                 "state": order.state,
+#                 "pincode": order.pincode,
+#             }
+#             return JsonResponse(response_data, status=200)
+
+#         except Order.DoesNotExist:
+#             return JsonResponse({"message": "Order not found"}, status=404)
+
+#     return JsonResponse({"message": "Method Not Allowed"}, status=405)
