@@ -9,6 +9,9 @@ from .models import User
 from .models import Product
 from .models import Order
 from django.contrib.auth.hashers import check_password
+from .models import OTP
+from datetime import datetime, timedelta
+from django.utils import timezone
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
 # from rest_framework import status
@@ -296,32 +299,114 @@ def create_order(request):
 
 
 # @csrf_exempt
-# def get_order_details(request, order_id):
-#     """Retrieve details of a specific order"""
-#     if request.method == "GET":
-#         try:
-#             order = Order.objects.get(id=order_id)
-#             response_data = {
-#                 "order_id": order.id,
-#                 "user": order.user.username,
-#                 "product": order.product.productname,
-#                 "quantity": order.quantity,
-#                 "price": str(order.price),
-#                 "delivery_charge": str(order.delivery_charge),
-#                 "total_price": str(order.total_price),
-#                 "status": order.status,
-#                 "order_date": order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
-#                 "full_name": order.full_name,
-#                 "phone": order.phone,
-#                 "house_no": order.house_no,
-#                 "landmark": order.landmark,
-#                 "city": order.city,
-#                 "state": order.state,
-#                 "pincode": order.pincode,
-#             }
-#             return JsonResponse(response_data, status=200)
+def get_order_details(request, order_id):
+    """Retrieve details of a specific order"""
+    if request.method == "GET":
+        try:
+            order = Order.objects.get(id=order_id)
+            response_data = {
+                "order_id": order.id,
+                "user": order.user.username,
+                "product": order.product.productname,
+                "quantity": order.quantity,
+                "price": str(order.price),
+                "delivery_charge": str(order.delivery_charge),
+                "total_price": str(order.total_price),
+                "status": order.status,
+                "order_date": order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "full_name": order.full_name,
+                "phone": order.phone,
+                "house_no": order.house_no,
+                "landmark": order.landmark,
+                "city": order.city,
+                "state": order.state,
+                "pincode": order.pincode,
+            }
+            return JsonResponse(response_data, status=200)
 
-#         except Order.DoesNotExist:
-#             return JsonResponse({"message": "Order not found"}, status=404)
+        except Order.DoesNotExist:
+            return JsonResponse({"message": "Order not found"}, status=404)
 
-#     return JsonResponse({"message": "Method Not Allowed"}, status=405)
+    return JsonResponse({"message": "Method Not Allowed"}, status=405)
+
+@csrf_exempt  
+def generate_otp(request):
+    if request.method == "POST":
+        
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+              return JsonResponse({"message": "Invalid JSON"}, status=400)
+        
+
+        mobile_number = data.get("mobile_number")
+        user_id = data.get("user_id")
+            
+
+        errors={}
+
+        if not mobile_number or not mobile_number.isdigit() or len(mobile_number) != 10:
+            errors["mobile_number"] = "Invalid mobile number"
+
+        if not user_id :
+            errors["user_id"] = "user id required"    
+
+        if errors:
+            return JsonResponse({"message":"otp generate failed","otp_created":False,"error":"Invalid mobile_number"},status=400)
+        
+            
+       
+
+        
+        otp_instance = OTP(user_id=user_id, mobile_number=mobile_number)
+        otp_instance.save()
+
+        
+        return JsonResponse({"message":"otp generate succesfully","otp_created":True},status=201)
+    
+    return JsonResponse({"message":"Invalid request"},status=405)
+
+
+@csrf_exempt
+def verify_otp(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"message": "Invalid JSON"}, status=400) 
+        
+        user_id = data.get("user_id")
+        mobile_number = data.get("mobile_number")
+        otp_code = data.get("otp_code")
+
+        if not user_id or not mobile_number or not otp_code:
+            return JsonResponse({"message": "Missing data", "otp_verify": False}, status=400)
+        
+        try:
+            # Get the latest OTP for the user and mobile number
+            otp_instance = OTP.objects.filter(
+                user_id=user_id,
+                mobile_number=mobile_number
+            ).order_by('-created_at').first()  # Get the latest OTP
+            
+            # Check if OTP exists
+            if otp_instance:
+                # Check if OTP is expired (2 minutes)
+                expiration_time = otp_instance.created_at + timedelta(minutes=2)
+                current_time = timezone.now()
+
+                if current_time > expiration_time:
+                    return JsonResponse({"message": "OTP expired", "otp_verify": False}, status=400)
+                
+                # Check if OTP matches
+                if otp_instance.otp_code == otp_code:
+                    return JsonResponse({"message": "OTP verified successfully", "otp_verify": True}, status=200)
+                else:
+                    return JsonResponse({"message": "Invalid OTP", "otp_verify": False}, status=400)
+            
+            return JsonResponse({"message": "Invalid OTP or Mobile number", "otp_verify": False}, status=400)
+
+        except OTP.DoesNotExist:
+            return JsonResponse({"message": "Invalid OTP or Mobile number", "otp_verify": False}, status=400)
+    
+    return JsonResponse({"message": "Invalid Request"}, status=405)

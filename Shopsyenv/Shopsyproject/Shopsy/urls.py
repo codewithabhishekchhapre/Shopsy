@@ -10,5 +10,7 @@ urlpatterns = [
      path('getProduct/', views.get_product_view, name='get_product'),
      path('deleteProduct/<int:product_id>/', views.delete_product_view, name='delete_product'),
      path('updateProduct/<int:product_id>/', views.update_product_view, name='update_product'),
-      path('create-order/', views.create_order, name='create-order')
+     path('create-order/', views.create_order, name='create-order'),
+     path('generate-otp/',views.generate_otp),
+     path('verify-otp/',views.verify_otp)
 ]

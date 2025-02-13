@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+import string
+import random
+from django.utils import timezone
 
 class User(models.Model):
     name = models.CharField(max_length=255)
@@ -57,3 +60,23 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.id} by {self.user.username}"    
+    
+    
+class OTP(models.Model):
+    user_id = models.IntegerField()  
+    mobile_number = models.CharField(max_length=15)  
+    otp_code = models.CharField(max_length=6)  
+    created_at = models.DateTimeField(auto_now_add=True)  # No default
+
+    def generate_otp(self):
+        """Generate a random 6-digit OTP"""
+        otp = ''.join(random.choices(string.digits, k=6)) 
+        return otp
+
+    def save(self, *args, **kwargs):
+        if not self.pk:  
+            self.otp_code = self.generate_otp()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.otp_code}"
