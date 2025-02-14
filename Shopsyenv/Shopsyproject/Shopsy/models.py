@@ -62,6 +62,12 @@ class Order(models.Model):
         return f"Order {self.id} by {self.user.username}"    
     
     
+class ImageUpload(models.Model):
+    image = models.ImageField(upload_to='uploads/', null=True, blank=True)  # Image will be saved in 'uploads/' folder inside 'media' directory.
+
+    def __str__(self):
+        return f"Image {self.id}"    
+    
 class OTP(models.Model):
     user_id = models.IntegerField()  
     mobile_number = models.CharField(max_length=15)  

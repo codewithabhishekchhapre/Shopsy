@@ -125,6 +125,9 @@ USE_TZ = True
 
 import os
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 STATIC_URL = '/static/'  # This is the URL path for accessing static files
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # Add this if your static files are in a folder named 'static' in the project root
