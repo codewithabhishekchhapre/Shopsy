@@ -41,7 +41,27 @@ def Homepage(request):
 #         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+from django.shortcuts import render, redirect
+from .forms import ImageUploadForm
 
+def upload_image(request):
+    if request.method == 'POST' and request.FILES:
+        form = ImageUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()  # Save the image
+            return redirect('image_uploaded')  # Redirect to a page that shows the uploaded image
+    else:
+        form = ImageUploadForm()
+
+    return render(request, 'upload_image.html', {'form': form})
+
+def image_uploaded(request):
+    return render(request, 'image_uploaded.html')
+
+
+
+def login_view_temp(request):
+    return render(request, 'login.html')
 
 @csrf_exempt  # Disable CSRF for simplicity (not recommended for production)
 def signup_view(request):
@@ -117,7 +137,7 @@ def login_view(request):
         try:
             user = User.objects.get(email=email)
             if password==user.password:
-                return JsonResponse({"message": "Login successful", "login": True}, status=200)
+                return JsonResponse({"message": "Login successful", "login": True,"user":{"username":user.name}}, status=200)
             else:
                 return JsonResponse({"message": "Invalid email or password", "login": False}, status=401)
         except User.DoesNotExist:

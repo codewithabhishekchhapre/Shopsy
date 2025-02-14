@@ -28,6 +28,8 @@
 
 <body>
 
+
+
   <!-- Header -->
   <header id="header" class="header">
     <div class="navigation">
@@ -65,9 +67,9 @@
               </li>
             </ul>
           </div>
-        
+        <h3 id="userdetails">Hello User</h3>
           <div class="nav__icons">
-            <a href="#" class="icon__item" id="login-btn">
+            <a href="/login_temp/" class="icon__item" id="login-btn">
               <i class="ri-user-line"></i>  
             </a>
         
@@ -138,16 +140,7 @@
   
   
 
-  <div class="auth">
-    <form action="" class="login-form">
-      <h3>Login Now</h3>
-      <input type="email" placeholder="your email" class="box">
-      <input type="password" placeholder="your password" class="box">
-      <p>forget your password <a href="#">Click Here</a></p>
-      <p>don't have an account <a href="#">Create now</a></p>
-      <input type="submit" value="Login now" class="btn">
-    </form>
-  </div>
+
   
   <div class="searchF">
     <form action="" class="search-form">
@@ -192,7 +185,18 @@
 
   </header>
   <!-- End Header -->
+  <script>
+    // Check if user details are in localStorage
+    const userDetails = JSON.parse(localStorage.getItem('userDetails'));
 
+    if (userDetails) {
+        // Display user details
+        document.getElementById('userdetails').innerText = `welcome ${userDetails}`;
+    } else {
+        document.getElementById('userdetails').innerText = "Hello User";
+    }
+    console.log(userDetails)
+</script>
   <!-- Main -->
     <main id="main">
       <div class="container">
